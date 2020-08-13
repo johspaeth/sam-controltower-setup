@@ -1,0 +1,10 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "sam-controltower-api"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-gubee0cp4giv"
+s3_prefix = "sam-controltower-api"
+region = "us-east-1"
+profile = "root-admin"
+capabilities = "CAPABILITY_IAM"

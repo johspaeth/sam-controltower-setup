@@ -1,0 +1,94 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: "AWS::Serverless-2016-10-31"
+Description: AWS SAM project perform additional Control Tower setup
+
+Parameters:
+  Regions:
+    Type: CommaDelimitedList
+    Description: Regions to enable for Security Hub and GuardDuty
+    Default: "us-east-1"
+
+Globals:
+  Function:
+    Runtime: python3.8
+    CodeUri: src/
+    MemorySize: 128 # megabytes
+    Timeout: 20 # seconds
+    Tracing: Active
+    Environment:
+      Variables:
+        POWERTOOLS_METRICS_NAMESPACE: ControlTowerSetup
+        LOG_LEVEL: INFO
+
+Resources:
+  OrganizationSetupFunction:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Description: Organization Setup Lambda handler
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: organization_setup
+      Events:
+        EventBridgeEvent:
+          Type: EventBridgeRule
+          Properties:
+            InputPath: "$.detail"
+            Pattern:
+              source:
+                - "aws.controltower"
+              "detail-type":
+                - "AWS Service Event via CloudTrail"
+              detail:
+                eventName:
+                  - SetupLandingZone
+                serviceEventDetails:
+                  setupLandingZoneStatus:
+                    state:
+                      - SUCCEEDED
+      Layers:
+        - !Ref DependencyLayer
+      Handler: organization_setup.lambda_handler
+      Policies:
+        - AWSOrganizationsFullAccess
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - "ec2:DescribeRegions"
+                - "guardduty:EnableOrganizationAdminAccount"
+                - "macie2:EnableOrganizationAdminAccount"
+                - "ram:EnableSharingWithAwsOrganization"
+                - "servicecatalog:EnableAWSOrganizationsAccess"
+              Resource: "*"
+      Timeout: 30 # seconds
+
+  OrganizationSetup:
+    Type: "Custom::OrganizationSetup"
+    Properties:
+      ServiceToken: !GetAtt OrganizationSetupFunction.Arn
+      Regions: !Join [",", !Ref Regions]
+
+  ControlTowerAssumePolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: ControlTowerAssumePolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: "sts:AssumeRole"
+            Resource: !Sub "arn:${AWS::Partition}:iam::*:role/AWSControlTowerExecution"
+      Roles:
+        - !Ref OrganizationSetupFunctionRole
+
+  DependencyLayer:
+    Type: "AWS::Serverless::LayerVersion"
+    Properties:
+      CompatibleRuntimes:
+        - python3.8
+      ContentUri: dependencies
+      LicenseInfo: MIT
+      RetentionPolicy: Delete
+    Metadata:
+      BuildMethod: python3.8
