@@ -1,7 +1,6 @@
 # .coveragerc to control coverage.py
 [run]
 source =
-  functions/
   src/
 omit =
   tests/*
@@ -31,4 +30,4 @@ ignore_errors = True
 
 [html]
 directory = coverage_html_report
-title = "Control Tower API Test Coverage"
+title = "Control Tower Setup Test Coverage"
