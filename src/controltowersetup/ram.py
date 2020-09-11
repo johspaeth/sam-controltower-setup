@@ -5,7 +5,7 @@ from aws_lambda_powertools import Logger
 import boto3
 import botocore
 
-logger = Logger()
+logger = Logger(child=True)
 
 __all__ = ["RAM"]
 

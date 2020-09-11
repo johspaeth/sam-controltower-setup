@@ -5,7 +5,7 @@ from aws_lambda_powertools import Logger
 import boto3
 import botocore
 
-logger = Logger()
+logger = Logger(child=True)
 
 __all__ = ["Macie"]
 
@@ -15,7 +15,7 @@ class Macie:
         self.client = boto3.client("macie2", region_name=region)
         self.region = region
 
-    def enable_organization_admin_account(self, account_id):
+    def enable_organization_admin_account(self, account_id: str):
         logger.info(
             f"Enabling account {account_id} to be Macie admin account in {self.region}"
         )
@@ -31,7 +31,7 @@ class Macie:
                 )
                 raise error
 
-    def update_organization_configuration(self, account_id):
+    def update_organization_configuration(self, account_id: str) -> None:
         """
         Update the organization configuration to auto-enroll new accounts in Macie
         """
@@ -48,4 +48,3 @@ class Macie:
 
         client = session.client("macie2", region_name=self.region)
         client.update_organization_configuration(autoEnable=True)
-

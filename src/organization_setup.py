@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from typing import Dict, Any, List
 import warnings
 
 from aws_lambda_powertools import Logger, Metrics, Tracer
+from aws_lambda_powertools.utilities.typing import LambdaContext
 import boto3
 from crhelper import CfnResource
 
@@ -24,24 +26,26 @@ metrics = Metrics()
 helper = CfnResource(json_logging=True, log_level="INFO", boto_level="INFO")
 CT_AUDIT_ACCOUNT_NAME = "Audit"
 
-SERVICE_ACCESS_PRINCIPALS = [
+SERVICE_ACCESS_PRINCIPALS = {
     "backup.amazonaws.com",
     "config.amazonaws.com",
     "config-multiaccountsetup.amazonaws.com",
     "guardduty.amazonaws.com",
     "macie.amazonaws.com",
-]
+}
 
-DELEGATED_ADMINISTRATOR_PRINCIPALS = [
+DELEGATED_ADMINISTRATOR_PRINCIPALS = {
     "access-analyzer.amazonaws.com",
     "config-multiaccountsetup.amazonaws.com",
     "guardduty.amazonaws.com",
     "macie.amazonaws.com",
-]
+}
 
 
 def setup_organization(
-    organizations: Organizations, regions: list = [], audit_account_id: str = None
+    organizations: Organizations,
+    regions: List[str] = None,
+    audit_account_id: str = None,
 ) -> bool:
     """
     Set up the organization in multiple regions
@@ -95,7 +99,7 @@ def setup_organization(
     return True
 
 
-def get_all_regions():
+def get_all_regions() -> List[str]:
     """
     Return all regions
     """
@@ -113,7 +117,7 @@ def get_all_regions():
 @tracer.capture_method
 @helper.create
 @helper.update
-def create(event: dict, context: dict) -> bool:
+def create(event: Dict[str, Any], context: LambdaContext) -> bool:
     logger.info("Got Create or Update")
 
     properties = event.get("ResourceProperties", {})
@@ -130,14 +134,14 @@ def create(event: dict, context: dict) -> bool:
 
 @tracer.capture_method
 @helper.delete
-def delete(event: dict, context: dict) -> None:
+def delete(event: Dict[str, Any], context: LambdaContext) -> None:
     logger.info("Got Delete")
 
 
 @metrics.log_metrics(capture_cold_start_metric=True)
 @tracer.capture_lambda_handler
 @logger.inject_lambda_context(log_event=True)
-def lambda_handler(event: dict, context: dict):
+def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> None:
 
     if event.get("eventName") == "SetupLandingZone":
         regions = [event["awsRegion"]]

@@ -5,13 +5,13 @@ from aws_lambda_powertools import Logger
 import boto3
 import botocore
 
-logger = Logger()
+logger = Logger(child=True)
 
 __all__ = ["GuardDuty"]
 
 
 class GuardDuty:
-    def __init__(self, region) -> None:
+    def __init__(self, region: str) -> None:
         self.client = boto3.client("guardduty", region_name=region)
         self.region = region
 
@@ -31,7 +31,7 @@ class GuardDuty:
                 )
                 raise error
 
-    def update_organization_configuration(self, account_id) -> None:
+    def update_organization_configuration(self, account_id: str) -> None:
         """
         Update the organization configuration to auto-enroll new accounts in GuardDuty
         """

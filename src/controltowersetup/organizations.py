@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import json
+from typing import List, Dict, Optional
 
 from aws_lambda_powertools import Logger
 import boto3
 import botocore
 
-logger = Logger()
+logger = Logger(child=True)
 CT_AUDIT_ACCOUNT_NAME = "Audit"
 CT_LOG_ACCOUNT_NAME = "Log archive"
 AI_OPT_OUT_POLICY_NAME = "AllOptOutPolicy"
@@ -21,7 +22,7 @@ class Organizations:
         self.roots = []
         self.accounts = []
 
-    def list_accounts(self) -> list:
+    def list_accounts(self) -> List[Dict[str, str]]:
         """
         List all of the accounts in an organization
         """
@@ -40,7 +41,7 @@ class Organizations:
         self.accounts = accounts
         return accounts
 
-    def list_policies(self, policy_type: str) -> list:
+    def list_policies(self, policy_type: str) -> List[Dict[str, str]]:
         """
         List all of the policies in an organization
         """
@@ -52,7 +53,7 @@ class Organizations:
             policies.extend(page.get("Policies", []))
         return policies
 
-    def list_roots(self) -> list:
+    def list_roots(self) -> List[Dict[str, str]]:
         """
         List all the roots in an organization
         """
@@ -69,7 +70,7 @@ class Organizations:
         self.roots = roots
         return roots
 
-    def enable_aws_service_access(self, principals: list) -> None:
+    def enable_aws_service_access(self, principals: List[str]) -> None:
         """
         Enable AWS service access in organization
         """
@@ -124,9 +125,9 @@ class Organizations:
         """
 
         for policy in self.list_policies("AISERVICES_OPT_OUT_POLICY"):
-            if policy.get("Name") == AI_OPT_OUT_POLICY_NAME:
+            if policy["Name"] == AI_OPT_OUT_POLICY_NAME:
                 logger.info(f"Found existing {AI_OPT_OUT_POLICY_NAME} policy")
-                return policy.get("Id")
+                return policy["Id"]
 
         logger.info(f"{AI_OPT_OUT_POLICY_NAME} policy not found, creating")
 
@@ -187,7 +188,7 @@ class Organizations:
                     raise error
 
     def register_delegated_administrator(
-        self, account_id: str, principals: list
+        self, account_id: str, principals: List[str]
     ) -> None:
         """
         Register a delegated administrator
@@ -214,7 +215,7 @@ class Organizations:
                     )
                     raise error
 
-    def get_audit_account_id(self) -> str:
+    def get_audit_account_id(self) -> Optional[str]:
         """
         Return the Control Tower Audit account
         """
@@ -223,7 +224,7 @@ class Organizations:
                 return account["Id"]
         return None
 
-    def get_log_account_id(self) -> str:
+    def get_log_account_id(self) -> Optional[str]:
         """
         Return the Control Tower Log Archive account
         """

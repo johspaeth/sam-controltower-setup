@@ -6,7 +6,7 @@ Description: AWS SAM project perform additional Control Tower setup
 Parameters:
   Regions:
     Type: CommaDelimitedList
-    Description: Regions to enable for Security Hub and GuardDuty
+    Description: Regions to enable for Security Hub and GuardDuty (leave blank for all regions)
     Default: "us-east-1"
 
 Globals:
@@ -50,7 +50,7 @@ Resources:
         - !Ref DependencyLayer
       Handler: organization_setup.lambda_handler
       Policies:
-        - AWSOrganizationsFullAccess
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AWSOrganizationsFullAccess"
         - Version: "2012-10-17"
           Statement:
             - Effect: Allow
