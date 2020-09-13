@@ -9,7 +9,7 @@ from aws_lambda_powertools.utilities.typing import LambdaContext
 import boto3
 from crhelper import CfnResource
 
-from .controltowersetup import (
+from controltowersetup import (
     AccessAnalyzer,
     GuardDuty,
     Macie,
@@ -42,6 +42,7 @@ DELEGATED_ADMINISTRATOR_PRINCIPALS = {
 }
 
 
+@tracer.capture_method
 def setup_organization(
     organizations: Organizations,
     regions: List[str] = None,
@@ -99,6 +100,7 @@ def setup_organization(
     return True
 
 
+@tracer.capture_method
 def get_all_regions() -> List[str]:
     """
     Return all regions
@@ -114,7 +116,6 @@ def get_all_regions() -> List[str]:
     return regions
 
 
-@tracer.capture_method
 @helper.create
 @helper.update
 def create(event: Dict[str, Any], context: LambdaContext) -> bool:
@@ -132,7 +133,6 @@ def create(event: Dict[str, Any], context: LambdaContext) -> bool:
     return setup_organization(organizations, regions, audit_account_id)
 
 
-@tracer.capture_method
 @helper.delete
 def delete(event: Dict[str, Any], context: LambdaContext) -> None:
     logger.info("Got Delete")
